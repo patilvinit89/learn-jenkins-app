@@ -2,11 +2,6 @@ pipeline {
     agent any
 
     stages {
-        // This is a comment
-        /*
-        comment1
-        comment2
-        */
         stage('Build') {
             agent {
                 docker {
@@ -57,7 +52,22 @@ pipeline {
                     npx playwright test --reporter=html
                 '''
             }
-        }        
+        }    
+        
+        stage('Deploy') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                   npm install netlify-cli
+                   node_modules/.bin/netlify --version
+                '''
+            }
+        }            
     }
 
     post {
