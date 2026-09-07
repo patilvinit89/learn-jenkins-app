@@ -57,6 +57,13 @@ pipeline {
                     npx playwright test --reporter=html
                 '''
             }
+
+            post {
+                always {
+                    junit 'jest-results/junit.xml'
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwtight LOCAL', reportTitles: '', useWrapperFileDirectly: true])
+                }
+            }
         }    
         
         stage('Deploy') {
@@ -75,13 +82,33 @@ pipeline {
                    node_modules/.bin/netlify deploy --dir=build --prod --no-build
                 '''
             }
-        }            
-    }
-
-    post {
-        always {
-            junit 'jest-results/junit.xml'
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwtight HTML Report', reportTitles: '', useWrapperFileDirectly: true])
         }
+
+        stage('PROD E2E') {
+	    agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.62.0-noble'
+                    reuseNode true
+                }
+            }
+
+
+        environment {
+            CI_ENVIRONMENT_URL = 'https://chic-kringle-b8cb00.netlify.app'
+            }
+
+            steps {
+                sh '''
+                    npx playwright test --reporter=html
+                '''
+            }
+
+            post {
+                always {
+                    junit 'jest-results/junit.xml'
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwtight E2E', reportTitles: '', useWrapperFileDirectly: true])
+                }
+            }
+        }            
     }
 }
